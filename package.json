@@ -1,6 +1,6 @@
 {
   "name": "wi-mcp-server",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "WebinarIgnition MCP Server — generate webinars from any MCP-compatible AI client",
   "type": "module",
   "bin": "./src/index.js",

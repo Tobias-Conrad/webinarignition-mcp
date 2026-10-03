@@ -1493,7 +1493,7 @@ app.get("/.well-known/mcp/server-card.json", (_req, res) => {
   res.set("Cache-Control", "no-store").json({
     // Muss zur veroeffentlichten Registry-Version passen (server.json) — sonst zeigt die
     // Server-Card eine andere Nummer als die Registry und Verzeichnisse verwirren sich.
-    serverInfo: { name: "WebinarIgnition", version: "1.0.5" },
+    serverInfo: { name: "WebinarIgnition", version: "1.0.6" },
     authentication: { required: false },
     tools: [
       { name: "wi_webinar", description: "71 AI tools for WordPress webinars across 11 areas (webinar, config, live control, Gutenberg registration pages, email, webhooks, leads, colors, autoresponder, settings, reports). 28 are read-only; 43 change something and 8 delete — nothing happens without the host's OK. Build the signup page, write invitation and reminder emails, open the live room, run live/automated/evergreen webinars, sell in the room with WooCommerce. Needs no sign-in." },
@@ -2310,7 +2310,7 @@ async function handleMcp(req, res) {
   try {
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     const server = new McpServer(
-      { name: "WebinarIgnition", version: "1.0.5" },
+      { name: "WebinarIgnition", version: "1.0.6" },
       { instructions: SERVER_INSTRUCTIONS }
     );
     registerAll(server);
