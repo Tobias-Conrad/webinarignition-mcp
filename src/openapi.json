@@ -1,0 +1,394 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "WebinarIgnition MCP Action",
+    "version": "1.2.0",
+    "description": "Erstelle komplette Webinar-Funnels mit WebinarIgnition. Der Assistent hilft dir Schritt f\u00fcr Schritt: Thema finden, Fakten sammeln, Einladungstexte schreiben, WordPress-Integration pr\u00fcfen. Hinweis: Der MCP-Endpunkt (POST /) und die OAuth-R\u00fcckwege (/connect/callback, /.well-known/oauth-authorization-server) sind bewusst NICHT Teil dieser REST-Doku \u2014 sie richten sich an MCP-Clients bzw. an den Browser des Gastgebers, nicht an fremde REST-Aufrufer."
+  },
+  "servers": [
+    {
+      "url": "https://mcp.webinarignition.com",
+      "description": "Production"
+    }
+  ],
+  "paths": {
+    "/api/funnel/start": {
+      "post": {
+        "summary": "Starte einen neuen Webinar-Funnel",
+        "description": "Beginne den WI-Assistenten-Chat mit einer Beschreibung des Webinars. Der Assistent sammelt Fakten (Thema, Zielgruppe, Termin, Angebot). Gibt eine session_id und die erste Antwort zur\u00fcck.",
+        "operationId": "funnelStart",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message"],
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "Die Beschreibung des Webinars durch den Gastgeber (Thema, Zielgruppe, Ziel)"
+                  },
+                  "language": {
+                    "type": "string",
+                    "enum": ["de", "en", "fr", "es", "it", "nl", "pt", "pl", "tr", "hu", "cs", "ro", "bg", "el", "da", "sv", "fi", "nb", "hr", "sr", "sk", "sl", "lt", "lv", "et"],
+                    "default": "de",
+                    "description": "Sprache des Webinar-Inhalts"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": ["own", "customer", "both"],
+                    "default": "own",
+                    "description": "Wer erstellt das Webinar: own (selbst), customer (Kunde), both (beide)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Funnel gestartet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "session_id": { "type": "string", "description": "Eindeutige Session-ID f\u00fcr Folgefragen" },
+                    "reply": { "type": "string", "description": "Antwort des WI-Assistenten" },
+                    "facts": { "type": "object", "description": "Bisher gesammelte Fakten" },
+                    "ready": { "type": "boolean", "description": "Ob der Assistent bereit ist, Texte zu generieren" },
+                    "options": { "type": "array", "items": { "type": "string" } },
+                    "quality_stage": { "type": "string" },
+                    "quality_next": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/funnel/chat": {
+      "post": {
+        "summary": "Webinar-Gespr\u00e4ch fortsetzen",
+        "description": "Sende die n\u00e4chste Antwort des Gastgebers an den WI-Assistenten. Wiederholen bis ready: true.",
+        "operationId": "funnelChat",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["session_id", "message"],
+                "properties": {
+                  "session_id": { "type": "string", "description": "Session-ID aus funnelStart" },
+                  "message": { "type": "string", "description": "Die n\u00e4chste Antwort des Gastgebers" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Chat-Antwort",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "session_id": { "type": "string" },
+                    "reply": { "type": "string", "description": "Antwort des WI-Assistenten" },
+                    "facts": { "type": "object", "description": "Aktualisierte Fakten" },
+                    "ready": { "type": "boolean" },
+                    "options": { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/funnel/generate": {
+      "post": {
+        "summary": "Webinar-Texte generieren",
+        "description": "Erzeuge fertige Einladungstexte aus den gesammelten Fakten. Rufe auf wenn ready: true.",
+        "operationId": "funnelGenerate",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["session_id"],
+                "properties": {
+                  "session_id": { "type": "string" },
+                  "type": {
+                    "type": "string",
+                    "default": "invites",
+                    "description": "Text-Sorte: invites (alle), list (E-Mail), personal, facebook, whatsapp, instagram, linkedin, telegram, youtube, plan (komplett), starter (Titel+1.Mail), refine (nachbessern), custom (eigener Kanal \u2014 dann custom_channel setzen). Bewusst ohne enum: weitere Sorten bleiben m\u00f6glich."
+                  },
+                  "custom_channel": {
+                    "type": "string",
+                    "description": "Nur mit type=custom: der genaue Name des eigenen Kanals/Formats, wenn er keiner der acht eingebauten Plattformen entspricht (z. B. Xing, WeChat, Line, KakaoTalk, Viber, Threads, Mastodon, Gastbeitrag, eigenes Format). Der Text wird dann genau f\u00fcr diesen Kanal geschrieben; es wird nicht nach der Plattform gefragt und nicht auf einen der acht Schl\u00fcssel abgebildet."
+                  },
+                  "job_id": {
+                    "type": "string",
+                    "description": "Optional: job_id aus einem fr\u00fcheren Aufruf. Wenn gesetzt, wird nur der Auftragsstatus abgefragt (statt eines neuen Auftrags)."
+                  },
+                  "invite_type": {
+                    "type": "string",
+                    "enum": ["list", "personal", "facebook", "whatsapp", "instagram", "linkedin", "telegram", "youtube"],
+                    "description": "Optional: die Plattform, f\u00fcr die die Einladung geschrieben wird (list = E-Mail, personal, facebook, whatsapp, instagram, linkedin, telegram, youtube). Nur f\u00fcr die acht eingebauten Plattformen \u2014 f\u00fcr einen eigenen Kanal stattdessen type=custom + custom_channel nutzen."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generierte Texte",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "session_id": { "type": "string" },
+                    "job_id": { "type": "string", "description": "Optional: gesetzt, wenn status=writing ist \u2014 mit dieser job_id sp\u00e4ter /api/funnel/status abfragen." },
+                    "status": { "type": "string", "enum": ["writing", "done", "failed"], "description": "Optional: writing (l\u00e4uft noch, job_id mitgegeben), failed (Fehler)." },
+                    "generated_text": { "type": "string", "description": "Optional: die generierten Texte, wenn sie direkt fertig vorlagen." },
+                    "message": { "type": "string", "description": "Optional: Hinweis oder Fehlermeldung (z. B. wenn nichts gesammelt ist oder der Writer nicht antwortet)." },
+                    "error": { "type": "string", "description": "Optional: error=no_facts, wenn f\u00fcr diese Session nichts gesammelt ist." },
+                    "facts": { "type": "object", "description": "Optional: die verwendeten Fakten." }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/funnel/status": {
+      "post": {
+        "summary": "Generierungs-Auftragsstatus abrufen",
+        "description": "Frage den Status eines laufenden Generierungs-Auftrags (funnel/generate) ab. Liefert done, failed oder writing. Bei done enth\u00e4lt die Antwort generated_text.",
+        "operationId": "funnelStatus",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["session_id", "job_id"],
+                "properties": {
+                  "session_id": { "type": "string", "description": "Session-ID aus funnelStart" },
+                  "job_id": { "type": "string", "description": "job_id des Generierungs-Auftrags aus funnel/generate" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Auftragsstatus",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "session_id": { "type": "string" },
+                    "job_id": { "type": "string" },
+                    "status": {
+                      "type": "string",
+                      "enum": ["done", "failed", "writing"],
+                      "description": "Auftragsstatus: done (fertig), failed (fehlgeschlagen), writing (noch in Arbeit)"
+                    },
+                    "generated_text": { "type": "string", "description": "Optional: die generierten Texte, wenn status done ist" },
+                    "message": { "type": "string", "description": "Optional: Fehlermeldung oder Zusatzinformation, wenn status failed ist" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/funnel/{session_id}": {
+      "get": {
+        "summary": "Funnel-Status abrufen",
+        "description": "Hole den aktuellen Status: Fakten, Gespr\u00e4chsverlauf, generierte Texte. Lokal, kein API-Aufruf.",
+        "operationId": "funnelGet",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Funnel-Status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "session_id": { "type": "string" },
+                    "facts": { "type": "object" },
+                    "history": { "type": "array" },
+                    "generated": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/assess/wp": {
+      "post": {
+        "summary": "WordPress-Installation pr\u00fcfen",
+        "description": "Pr\u00fcft eine WordPress-Seite: L\u00e4uft dort WordPress? Ist WebinarIgnition installiert und ist dessen KI-Verbindung erreichbar? Liefert einen Zustand (state), einen fertigen n\u00e4chsten Schritt (next_action) und die dazu passenden Links. Die KI installiert oder aktualisiert WebinarIgnition nie selbst \u2014 next_url wird unver\u00e4ndert an den Menschen weitergereicht; er klickt, er aktualisiert. Die Fassung der Gegenseite wird bewusst NICHT vor dem Verbinden ausgewiesen \u2014 sie steht erst nach der Anbindung in der initialize-Antwort (serverInfo.version).",
+        "operationId": "assessWp",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url"],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "Die Adresse der WordPress-Seite, die gepr\u00fcft werden soll (z. B. https://example.com). Pflichtfeld \u2014 ohne url antwortet der Endpunkt mit 400."
+                  },
+                  "language": {
+                    "type": "string",
+                    "default": "de",
+                    "description": "Sprache, in der question und guidance formuliert werden sollen."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status der gepr\u00fcften Seite",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "has_wp": { "type": "boolean", "description": "Ob unter der Adresse WordPress erkennbar ist (REST-Index antwortet)." },
+                    "has_wi": { "type": "boolean", "description": "Ob WebinarIgnition auf der Seite installiert und aktiv ist." },
+                    "has_mcp": { "type": "boolean", "description": "Ob die KI-Verbindung von WebinarIgnition (wi-mcp) auf der Seite erreichbar ist." },
+                    "needs_wp": { "type": "boolean", "description": "Ob der Gastgeber erst WordPress besorgen muss." },
+                    "needs_wi": { "type": "boolean", "description": "Ob WebinarIgnition erst installiert werden muss." },
+                    "state": {
+                      "type": "string",
+                      "enum": ["no_wp", "wp_unreadable", "wp_without_wi", "wi_too_old", "wi_ready"],
+                      "description": "Der Zustand der Seite: no_wp (kein WordPress erkennbar), wp_unreadable (die Adresse nennt einen WordPress-Pfad, die Seite war von au\u00dfen aber nicht lesbar \u2014 ungepr\u00fcfter WordPress-Verdacht, NICHT \u201ekein WordPress\u2018), wp_without_wi (WordPress ja, WebinarIgnition nein), wi_too_old (WebinarIgnition da, aber KI-Verbindung antwortet nicht), wi_ready (alles bereit zum Verbinden)."
+                    },
+                    "looks_like_wp": { "type": "boolean", "description": "Die genannte Adresse tr\u00e4gt selbst einen WordPress-Pfad (/wp, /wp-admin, /wp-login.php, /wp-json, /wp-content, /wp-includes), die Seite war von au\u00dfen aber nicht lesbar. Das ist genau das Bild einer Bot-/WAF-Schranke oder des Wartungsmodus \u2014 dann NICHT \u201ekein WordPress\u2018 sagen, sondern mit genau dieser Adresse (inkl. Unterordner) verbinden. Verbinden aber NUR, wenn zugleich ready_to_connect true ist: eine private/interne oder nicht aufl\u00f6sbare Adresse setzt looks_like_wp, aber NICHT ready_to_connect." },
+                    "ready_to_connect": { "type": "boolean", "description": "true bei wi_ready (Seite gepr\u00fcft und bereit) UND bei wp_unreadable, wenn die Adresse einen WordPress-Pfad nennt, die Seite von au\u00dfen aber nicht lesbar war (Bot-/WAF-Schranke) \u2014 der Verbindungs-Flow ist der n\u00e4chste Schritt. false bei einer privaten/internen oder nicht aufl\u00f6sbaren Adresse: dort bleibt die ehrliche \u201enicht pr\u00fcfbar\u201c-Antwort stehen, kein Verbindungs-Link." },
+                    "guidance": { "type": "string", "description": "Ein kurzer, ehrlicher Hinweis, was auf der Seite los ist \u2014 f\u00fcr den Gastgeber formuliert." },
+                    "checked_url": { "type": "string", "description": "Die normalisierte Adresse, die tats\u00e4chlich gepr\u00fcft wurde. Technische Endst\u00fccke (wp-admin, wp-login.php, wp-json, wp-content, wp-includes, index.php, xmlrpc.php, wp-cron.php, wp-activate.php, wp-signup.php, wp-trackback.php, feed) und alles danach sind abgeschnitten, h\u00f6chstens drei Unterordner bleiben (wie im Plugin)." },
+                    "next_action": {
+                      "type": "string",
+                      "enum": ["get_wordpress", "install", "update", "connect"],
+                      "description": "Der eine fertige n\u00e4chste Schritt: get_wordpress (Seite besorgen), install (WebinarIgnition installieren), update (WebinarIgnition aktualisieren), connect (direkt verbinden)."
+                    },
+                    "next_url": {
+                      "type": "string",
+                      "description": "Der fertige Link f\u00fcr diesen Schritt. Wird UNVER\u00c4NDERT an den Menschen weitergereicht \u2014 die KI kann kein Plugin installieren oder aktualisieren, er klickt selbst. Bei next_action=connect ist dieses Feld leer; der Verbindungs-Link entsteht erst im Verbindungs-Flow der echten Seite."
+                    },
+                    "next_url_alt": {
+                      "type": "string",
+                      "description": "Optional: ein zweiter Link. Existiert bei install \u2014 eine gefilterte Plugin-Liste f\u00fcr den Fall, dass WebinarIgnition installiert, aber deaktiviert ist (von au\u00dfen sehen wir nur aktive Plugins, daher sieht das identisch aus wie nicht installiert)."
+                    },
+                    "instruction": { "type": "string", "description": "Was die KI mit diesem Ergebnis tun soll \u2014 wann sie den Link weitergibt, wann sie erneut pr\u00fcft." },
+                    "question": {
+                      "type": "object",
+                      "description": "Die eine Frage, die nach diesem Schritt sinnvoll folgt, mit antwortbaren Optionen \u2014 dem Gastgeber als Auswahl anbieten.",
+                      "properties": {
+                        "text": { "type": "string" },
+                        "options": { "type": "array", "items": { "type": "string" } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "url fehlt oder ist leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Kurze, verst\u00e4ndliche Meldung, was fehlt." }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/config": {
+      "get": {
+        "summary": "MCP-Konfiguration anzeigen",
+        "description": "Zeigt API-Endpunkt, client_id und Consent-Status an.",
+        "operationId": "getConfig",
+        "responses": {
+          "200": {
+            "description": "Konfiguration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "api_base": { "type": "string" },
+                    "client_id": { "type": "string" },
+                    "consent_granted": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Server-Status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean", "description": "true, wenn der Server antwortet." },
+                    "service": { "type": "string", "description": "Dienstname, immer wi-mcp-server." },
+                    "protocol": { "type": "string", "description": "Transportprotokoll, immer streamable-http." },
+                    "client_id": { "type": "string", "description": "Die registrierte OAuth-Client-ID des Connectors." },
+                    "consent": { "type": "boolean", "description": "Ob der Nutzer der KI-Nutzung zugestimmt hat." },
+                    "api_base": { "type": "string", "description": "Basis-URL des WebinarIgnition-Prompters." }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+app = "wi-mcp-server"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  WI_MCP_PORT = "3000"
+  WI_MCP_CONSENT_GRANTED = "true"
+  WI_MCP_CONSENT_VERSION = "1.0"
+  WI_MCP_API_BASE = "https://webinarignition.com/wp-json/wi-prompter/v1/mcp"
+  # Funnel sessions live here so a deploy or a restart never loses a conversation.
+  WI_MCP_STATE_DIR = "/data"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  # One machine on purpose: the funnel sessions are on the volume below, and a volume
+  # belongs to exactly one machine. A second machine would not see the conversation a
+  # host started on the first — "session expired" mid-sentence. Scale this machine up
+  # (memory/CPU) rather than out; move sessions to shared storage before going wider.
+  min_machines_running = 1
+  max_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    soft_limit = 200
+    hard_limit = 400
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    method = "GET"
+    path = "/health"
+
+[[mounts]]
+  source = "wi_mcp_state"
+  destination = "/data"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
