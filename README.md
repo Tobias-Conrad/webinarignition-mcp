@@ -1,5 +1,7 @@
 # WebinarIgnition MCP Server
 
+[![MCP Badge](https://lobehub.com/badge/mcp/tobias-conrad-webinarignition-mcp)](https://lobehub.com/mcp/tobias-conrad-webinarignition-mcp)
+
 Build and run WordPress webinars from a chat. One MCP server that puts WebinarIgnition
 inside any AI assistant — Claude, ChatGPT, Cursor and any MCP-capable client.
 
@@ -14,6 +16,11 @@ inside any AI assistant — Claude, ChatGPT, Cursor and any MCP-capable client.
 > and the product knowledge service — so the supported way to use the server is
 > the hosted endpoint above. Everything else (MCP transport, funnel session
 > engine, WordPress connection flow, outbound channel) is included.
+
+## Install
+
+Remote MCP server (Streamable HTTP, no auth): `https://mcp.webinarignition.com/?src=registry`.
+Agents: see [llms-install.md](llms-install.md) for the exact steps.
 
 ## Tools
 
