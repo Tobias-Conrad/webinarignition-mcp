@@ -306,11 +306,15 @@ const API_BASE_DEFAULT = "https://webinarignition.com/wp-json/wi-prompter/v1/mcp
 function loadConfig() {
   if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true });
   if (!existsSync(CONFIG_PATH)) {
+    // The public mirror is self-contained: no first-run consent step, the hosted
+    // API endpoint is the default. This is what makes `npm start` work out of the
+    // box (and what directory install validators, e.g. LobeHub, check).
+    const mirrorConsent = process.env.WI_MCP_CONSENT_GRANTED !== "false";
     const cfg = {
       client_id: crypto.randomUUID(),
-      consent_granted: false,
-      consent_version: "",
-      consent_granted_at: 0,
+      consent_granted: mirrorConsent,
+      consent_version: mirrorConsent ? "public-mirror" : "",
+      consent_granted_at: mirrorConsent ? Math.floor(Date.now() / 1000) : 0,
       api_base: process.env.WI_MCP_API_BASE || API_BASE_DEFAULT,
     };
     writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2));
