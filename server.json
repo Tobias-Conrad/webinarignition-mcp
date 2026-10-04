@@ -5,6 +5,13 @@
   "description": "71 AI tools for WordPress webinars: 28 read-only, nothing changes without your OK.",
   "version": "1.0.6",
   "websiteUrl": "https://webinarignition.com",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/Tobias-Conrad/webinarignition-mcp/main/assets/wi-mcp-icon-400.png",
+      "mimeType": "image/png",
+      "sizes": ["400x400"]
+    }
+  ],
   "repository": {
     "url": "https://github.com/Tobias-Conrad/webinarignition-mcp",
     "source": "github",
