@@ -1,0 +1,294 @@
+{
+  "author": "Tobias-Conrad",
+  "authorUrl": "https://github.com/Tobias-Conrad",
+  "cloudEndpoint": "https://mcp.webinarignition.com/?src=github",
+  "description": "WebinarIgnition MCP Server — generate webinars from any MCP-compatible AI client",
+  "homepage": "https://github.com/Tobias-Conrad/webinarignition-mcp",
+  "identifier": "tobias-conrad-webinarignition-mcp",
+  "name": "WebinarIgnition",
+  "prompts": [
+    {
+      "name": "build_my_webinar",
+      "description": "Build a complete webinar — topic, title, invitation emails and registration page.",
+      "arguments": [
+        {
+          "name": "topic",
+          "description": "What you do best, or the topic — leave empty and we will find one together.",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "find_my_topic",
+      "description": "Not sure what to talk about? Find a webinar topic your audience is already looking for."
+    },
+    {
+      "name": "can_webinarignition_do_this",
+      "description": "Ask anything about WebinarIgnition — integrations, limits, pricing, or whether it fits what you need.",
+      "arguments": [
+        {
+          "name": "question",
+          "description": "What you want to know, e.g. \"how do my registrations reach ActiveCampaign?\"",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "write_my_invitation",
+      "description": "I already have a topic — write my invitation email and title.",
+      "arguments": [
+        {
+          "name": "topic",
+          "description": "The topic of your webinar.",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "name": "Which interface to use",
+      "title": "Which interface to use",
+      "uri": "webinarignition://interfaces",
+      "description": "Which existing WordPress interface handles which job — and where an AI cannot edit (Elementor, Divi, Thrive).",
+      "mimeType": "text/markdown"
+    },
+    {
+      "name": "What WebinarIgnition solves",
+      "title": "What WebinarIgnition solves",
+      "uri": "webinarignition://capabilities",
+      "description": "Verified answers: integrations, webhooks, limits, licences, video sources, page builders, when it is not the right tool.",
+      "mimeType": "text/markdown"
+    },
+    {
+      "name": "How WebinarIgnition works",
+      "title": "How WebinarIgnition works",
+      "uri": "webinarignition://how-it-works",
+      "description": "What WebinarIgnition does, who you are building for, and how to run the conversation.",
+      "mimeType": "text/markdown"
+    }
+  ],
+  "tools": [
+    {
+      "name": "wi_webinar",
+      "title": "WebinarIgnition",
+      "description": "Plan, write and set up a webinar from a chat, and answer questions about WebinarIgnition. It picks a topic, produces the title, the invitation emails, the reminders and the registration page, and prepares the live, automated or evergreen room on the user's own WordPress site. Needs no sign-in. Returns JSON.\n`was` selects the step:\n• start — entry point; returns a question with tappable options.\n• thema — starts a conversation from the user's text; needs `text`.\n• weiter — continues a conversation; needs `session_id` and `text`. A result with ready=true means the texts can be written next with was=texte.\n• texte — writes the finished texts for a ready session; needs `session_id`. Optional: `job_id` to poll a running job, `direction` for an angle, `skip_direction`, `invite_type` (list, personal, facebook, whatsapp, instagram, linkedin, telegram, youtube), or type=\"custom\" with `custom_channel` for any other channel.\n• stand — returns what the session has collected so far; needs `session_id`.\n• seite — checks a WordPress address for WebinarIgnition; needs `url`; returns state, next_action and next_url.\n• verbinden — connects the chat to the user's own WordPress; the first call needs `session_id` and `url` and returns a connect_url that the user opens in their own browser; a later call without `url` reports whether it went through.\n• faehigkeiten — lists the abilities of the connected site; needs `session_id`.\n• ausfuehren — runs one ability on the connected site; needs `session_id`, `tool` and `args`. Destructive abilities are not run here; the answer points to wi_webinar_delete.\n• trennen — drops the connection; needs `session_id`.\n• handoff — returns a handover link carrying the collected data; needs `session_id` (or `known_facts`/`content`), optional `url`.\n• technik — returns the setup plan without a connected site.\n• frage — answers a product question (prices, limits, integrations); needs `text`.\n• status — technical state of the connector.\nReturns { error, message } when a required field is missing, and { question } when the user has choices to make.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "was": {
+            "type": "string",
+            "enum": [
+              "start",
+              "thema",
+              "weiter",
+              "texte",
+              "stand",
+              "seite",
+              "verbinden",
+              "faehigkeiten",
+              "ausfuehren",
+              "trennen",
+              "handoff",
+              "technik",
+              "frage",
+              "status"
+            ],
+            "description": "Which step to run."
+          },
+          "tool": {
+            "description": "Only with was=ausfuehren: the ability name exactly as was=faehigkeiten reported it, e.g. webinarignition_create_webinar. Slashes and hyphens are accepted too, but the site publishes underscores.",
+            "type": "string"
+          },
+          "args": {
+            "description": "Only with was=ausfuehren: the arguments for that ability, shaped by its input_schema.",
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "text": {
+            "description": "What the host said (thema · weiter) or the question in the host's language (frage).",
+            "type": "string"
+          },
+          "session_id": {
+            "description": "From an earlier turn (weiter · texte · stand).",
+            "type": "string"
+          },
+          "job_id": {
+            "description": "Only with was=texte: the job number from an earlier call, to check whether the texts are ready. Without job_id a new job is started; only one text job runs at a time.",
+            "type": "string"
+          },
+          "url": {
+            "description": "The WordPress address (seite). With was=handoff: the host's WordPress address to point the handover link at.",
+            "type": "string"
+          },
+          "content": {
+            "description": "Only with was=handoff: finished text to carry over, if the session alone does not hold it.",
+            "type": "string"
+          },
+          "rating": {
+            "description": "Only with was=handoff: the host's rating (1-10), if any.",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "language": {
+            "default": "de",
+            "description": "The language the host writes in.",
+            "type": "string"
+          },
+          "known_facts": {
+            "description": "Everything you already know — send it every turn so nothing is lost on a restart.",
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "focus": {
+            "description": "Only with was=start: what it should be about.",
+            "type": "string",
+            "enum": [
+              "thema",
+              "texte",
+              "technik",
+              "fragen",
+              "alles"
+            ]
+          },
+          "situation": {
+            "description": "Only with was=start: what the host just said.",
+            "type": "string"
+          },
+          "type": {
+            "description": "Only with was=texte: invites (default), starter, or custom. custom = the invitation is for a channel that is NOT one of the eight built-in platforms — pass the channel name in custom_channel. A channel outside the eight built-ins is written as custom, not as one of the eight.",
+            "type": "string"
+          },
+          "custom_channel": {
+            "description": "Only with was=texte and type=\"custom\": the exact name of the channel or format the invitation is for when it is not one of the eight built-in platforms — e.g. Xing, WeChat, Line, KakaoTalk, Viber, Threads, Mastodon, a guest article, or the host's own format. The text is then written for exactly this channel, not for a built-in platform.",
+            "type": "string"
+          },
+          "invite_type": {
+            "description": "Only with was=texte, when the invitation is for a specific platform: list = email list, personal = personal message, facebook = Facebook post, whatsapp = WhatsApp status, instagram = Instagram post, linkedin = LinkedIn post, telegram = Telegram channel, youtube = YouTube post.",
+            "type": "string",
+            "enum": [
+              "list",
+              "personal",
+              "facebook",
+              "whatsapp",
+              "instagram",
+              "linkedin",
+              "telegram",
+              "youtube"
+            ]
+          },
+          "direction": {
+            "description": "Optional with was=texte: the angle/framing of the invitation (natural language), e.g. 'Zeitersparnis und Skalierung ohne neue Mitarbeiter' for an agency. If missing, the invitation is written at once without a special angle.",
+            "type": "string"
+          },
+          "skip_direction": {
+            "description": "Only with was=texte: true when the host wants NO special angle — then it generates without an angle.",
+            "type": "boolean"
+          },
+          "has_wordpress": {
+            "description": "Only with was=start: true when the host already has a WordPress site.",
+            "type": "boolean"
+          },
+          "has_wi": {
+            "description": "Only with was=start: true when WebinarIgnition is already installed on the host's site.",
+            "type": "boolean"
+          },
+          "has_mcp": {
+            "description": "Only with was=start: true when the host already uses an MCP/connector — the connector normally sets this itself.",
+            "type": "boolean"
+          },
+          "wants": {
+            "description": "Only with was=start: what the host wants, as short keywords (e.g. \"thema\", \"texte\", \"technik\").",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "was"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {}
+        },
+        "required": [
+          "result"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "wi_webinar_delete",
+      "title": "WebinarIgnition — delete",
+      "description": "Delete or replace something on the connected WordPress site — irreversible. Runs only an ability that is verified as destructive: delete a campaign, a webhook, registrants (single or all), the logs, the attendee questions, or the HC import that replaces a campaign. Writes abilities are not run here; use wi_webinar with was=\"ausfuehren\" for those. Needs `session_id` and `tool`, optional `args`. Returns JSON.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "The conversation id from an earlier turn — the session whose WordPress site is connected."
+          },
+          "tool": {
+            "type": "string",
+            "description": "The destructive ability name exactly as was=\"faehigkeiten\" reported it, e.g. webinarignition_delete_campaign or webinarignition_delete_webhook. Slashes and hyphens are accepted too, but the site publishes underscores."
+          },
+          "args": {
+            "description": "The arguments for that ability, shaped by its input_schema.",
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "session_id",
+          "tool"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "result": {}
+        },
+        "required": [
+          "result"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ],
+  "version": "1.0.6"
+}
