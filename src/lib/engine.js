@@ -899,18 +899,39 @@ export const engine = {
     };
   },
 
-  async funnelStart(message, language = "de", role = "own") {
+  async funnelStart(message, language = "de", role = "own", known_facts = null, situation = "") {
     checkConsent(config);
     const sid = crypto.randomUUID();
+    // P2 (Tobias 2026-10-05): Der Stand, den ein Chat/Agent schon kennt, wird beim ERSTEN Aufruf
+    // mitgenommen — nicht verworfen. Belegter Fehler: ein Host kam mit "30 Jahre Material" an, die
+    // Frage blieb trotzdem "Worin bist du gut?" (situation verpuffte). Hier wird der übergebene
+    // known_facts-Stand als Start-Fakten mitgegeben, und die situation (was der Host gerade gesagt
+    // hat) als erste User-Nachricht vorangestellt, damit das Backend daraus ableiten kann.
+    const seedFacts = (known_facts && typeof known_facts === "object") ? { ...known_facts } : {};
+    // Die erste Nachricht darf nicht leer sein (das Backend antwortet sonst "Write a short message
+    // first."). Reihenfolge: situation (was der Host gerade sagte) → message → aus den Fakten
+    // zusammengesetzt. So startet auch ein reiner known_facts-Aufruf (Uebergabe aus einem Chat)
+    // eine echte Konversation statt ins Leere zu laufen.
+    let firstMessage = String(situation || "").trim() || String(message || "").trim();
+    if (!firstMessage && Object.keys(seedFacts).length) {
+      const bits = [];
+      if (seedFacts.topic) bits.push(`Mein Thema: ${seedFacts.topic}`);
+      if (seedFacts.audience) bits.push(`meine Zielgruppe: ${seedFacts.audience}`);
+      if (seedFacts.offer) bits.push(`mein Angebot: ${seedFacts.offer}`);
+      if (seedFacts.style_sample) bits.push(`so schreibe ich: ${seedFacts.style_sample}`);
+      firstMessage = bits.length
+        ? bits.join(", ") + "."
+        : "Ich habe schon Material zu meinem Webinar.";
+    }
     const r = await wiApi(config, "POST", "/chat", {
-      message, language, role, history: [], facts: {},
+      message: firstMessage, language, role, history: [], facts: seedFacts,
     });
     sessions.set(sid, {
       history: [
-        { role: "user", content: message },
+        { role: "user", content: firstMessage },
         { role: "assistant", content: r.say },
       ],
-      facts: r.facts || {},
+      facts: r.facts || seedFacts,
       generated: null,
       language,
       role,

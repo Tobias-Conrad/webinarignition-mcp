@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.webinarignition/mcp",
   "title": "WebinarIgnition",
-  "description": "71 AI tools for WordPress webinars: 28 read-only, nothing changes without your OK.",
-  "version": "1.0.7",
+  "description": "Tell it your webinar topic in one sentence — no sign-in. It builds the WordPress webinar.",
+  "version": "1.0.9",
   "websiteUrl": "https://webinarignition.com",
   "icons": [
     {

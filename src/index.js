@@ -8,7 +8,7 @@ import { engine } from "./lib/engine.js";
 // wi_webinar — dieselbe Registrierung wie der HTTP-Server, damit an keiner Stelle
 // Legacy-Werkzeuge (wi_funnel_*, wi_guide, wi_answer_question, …) auftauchen. Ein Werkzeug
 // heisst eine Berechtigungsfrage fuer den Gastgeber (Tobias).
-const server = new McpServer({ name: "webinarignition-mcp", version: "1.0.6" });
+const server = new McpServer({ name: "webinarignition-mcp", version: "1.0.9" });
 registerAll(server);
 
 async function main() {

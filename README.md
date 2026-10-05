@@ -123,6 +123,8 @@ Directories list their own endpoint URL with an attribution parameter:
 | mcp.so | `https://mcp.webinarignition.com/?src=mcpso` |
 | Glama | `https://mcp.webinarignition.com/?src=glama` |
 | mcpbeat | `https://mcp.webinarignition.com/?src=mcpbeat` |
+| ChatGPT app | `https://mcp.webinarignition.com/?src=chatgpt` |
+| Claude connector | `https://mcp.webinarignition.com/?src=claude` |
 
 ## Health
 
